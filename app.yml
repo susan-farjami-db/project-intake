@@ -1,0 +1,12 @@
+command: ["uvicorn", "project_intake.backend.app:app", "--workers", "2"]
+env:
+  # PGHOST / PGPORT / PGDATABASE / PGUSER are injected by the `postgres` resource.
+  - name: LAKEBASE_ENDPOINT
+    valueFrom: postgres
+  - name: DATABRICKS_SQL_WAREHOUSE_ID
+    valueFrom: sql-warehouse
+  - name: PROJECT_INTAKE_DB_SCHEMA
+    value: project_intake
+  # "1" loads the sample AI Task Force requests into an EMPTY table (demo workspaces only).
+  - name: PROJECT_INTAKE_SEED_SAMPLE_DATA
+    value: "0"
