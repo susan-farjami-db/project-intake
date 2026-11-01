@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from sqlalchemy import func, or_, select, text
 from sqlmodel import Session
 
+from . import delta_sync
 from .classify import classify_intake
 from .core._base import LifespanDependency
 from .core._config import logger
@@ -355,7 +356,11 @@ class ProjectStore:
             sensitive_data=["Y", "N"],
             strategic_alignments=["Strategic Initiative", "Annual Goal"],
             effort_estimates=["S", "M", "L"],
-            data_note="AI Task Force requests are saved to Lakebase.",
+            data_note=(
+                f"AI Task Force requests are saved to Lakebase and synced to {delta_sync.DELTA_TABLE}."
+                if delta_sync.enabled()
+                else "AI Task Force requests are saved to Lakebase."
+            ),
         )
 
     def _all(self, session: Session) -> list[ProjectOut]:
@@ -457,6 +462,7 @@ class ProjectStore:
         session.add(row)
         session.commit()
         session.refresh(row)
+        delta_sync.submit(ws, delta_sync.row_snapshot(row))
         return _to_out(row)
 
     def update(
@@ -495,6 +501,7 @@ class ProjectStore:
         session.add(row)
         session.commit()
         session.refresh(row)
+        delta_sync.submit(ws, delta_sync.row_snapshot(row))
         return _to_out(row)
 
     def scan(self, session: Session, draft: DuplicateScanIn) -> DuplicateScanOut:
@@ -565,6 +572,9 @@ class _ProjectDataDependency(LifespanDependency):
                     logger.info(f"Seeded {inserted} sample requests into {DB_SCHEMA}.projects")
             _sync_id_sequence(session)
             session.commit()
+            if delta_sync.enabled():
+                rows = [delta_sync.row_snapshot(r) for r in session.scalars(select(ProjectRow)).all()]
+                delta_sync.reconcile(getattr(app.state, "workspace_client", None), rows)
         yield
 
     @staticmethod

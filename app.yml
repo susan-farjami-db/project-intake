@@ -10,3 +10,6 @@ env:
   # "1" loads the sample AI Task Force requests into an EMPTY table (demo workspaces only).
   - name: PROJECT_INTAKE_SEED_SAMPLE_DATA
     value: "0"
+  # catalog.schema.table to mirror requests into Delta (MERGE on save). Empty disables the sync.
+  - name: PROJECT_INTAKE_DELTA_TABLE
+    value: ""
