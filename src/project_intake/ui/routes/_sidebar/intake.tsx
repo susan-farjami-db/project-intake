@@ -61,6 +61,23 @@ const emptyDraft: ProjectIn = {
   desired_timeframe: "",
 };
 
+// FastAPI returns `detail` as a string (HTTPException) or a list of validation errors (422).
+function errorMessage(error: unknown): string {
+  if (error instanceof ApiError && typeof error.body === "object" && error.body && "detail" in error.body) {
+    const detail = (error.body as { detail: unknown }).detail;
+    if (typeof detail === "string") return detail;
+    if (Array.isArray(detail)) {
+      const parts = detail.map((item) => {
+        const { loc, msg } = (item ?? {}) as { loc?: unknown[]; msg?: string };
+        const field = Array.isArray(loc) ? loc.filter((p) => p !== "body").join(".") : "";
+        return field ? `${field}: ${msg ?? "invalid"}` : (msg ?? "invalid");
+      });
+      if (parts.length) return parts.join("; ");
+    }
+  }
+  return error instanceof Error && error.message ? error.message : "Could not submit";
+}
+
 function IntakePage() {
   const catalog = useGetCatalog(selector<CatalogOut>());
   const queryClient = useQueryClient();
@@ -88,17 +105,11 @@ function IntakePage() {
       return;
     }
     try {
-      const created = await create.mutateAsync(draft);
+      const created = await create.mutateAsync({ params: {}, data: draft });
       toast.success(`Filed ${created.data.id} as ${created.data.intake_type}`);
       await navigate({ to: "/projects/$projectId", params: { projectId: created.data.id } });
     } catch (error) {
-      const message =
-        error instanceof ApiError && typeof error.body === "object" && error.body && "detail" in error.body
-          ? String((error.body as { detail: string }).detail)
-          : error instanceof Error
-            ? error.message
-            : "Could not submit";
-      toast.error(message);
+      toast.error(errorMessage(error));
     }
   }
 
@@ -115,11 +126,13 @@ function IntakePage() {
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-10">
+      {/* autoComplete off: browsers must not offer the previous person's name or contact. */}
+      <form onSubmit={onSubmit} autoComplete="off" className="space-y-10">
         <Section title="Request">
         <div className="grid gap-5 md:grid-cols-2">
         <Field label="Business Unit" htmlFor="business_dept">
           <Input
+            autoComplete="off"
             id="business_dept"
             value={draft.business_dept ?? ""}
             onChange={(event) => update("business_dept", event.target.value)}
@@ -148,6 +161,7 @@ function IntakePage() {
         </Field>
         <Field label="Request Title" htmlFor="request_title">
           <Input
+            autoComplete="off"
             id="request_title"
             required
             value={draft.request_title}
@@ -163,6 +177,7 @@ function IntakePage() {
         </Field>
         <Field label="Est. User Population" htmlFor="estimated_user_population">
           <Input
+            autoComplete="off"
             id="estimated_user_population"
             value={draft.estimated_user_population ?? ""}
             onChange={(event) => update("estimated_user_population", event.target.value)}
@@ -226,6 +241,7 @@ function IntakePage() {
         <Section title="Prioritization">
         <Field label="Readiness Score" htmlFor="readiness_score">
           <Input
+            autoComplete="off"
             id="readiness_score"
             value={draft.readiness_score ?? ""}
             onChange={(event) => update("readiness_score", event.target.value)}
@@ -272,6 +288,7 @@ function IntakePage() {
         <Section title="Requestor">
         <Field label="Requestor" htmlFor="requestor">
           <Input
+            autoComplete="off"
             id="requestor"
             required
             value={draft.requestor}
@@ -291,6 +308,7 @@ function IntakePage() {
           </Field>
           <Field label="Executive Sponsor" htmlFor="executive_sponsor">
             <Input
+              autoComplete="off"
               id="executive_sponsor"
               value={draft.executive_sponsor ?? ""}
               onChange={(event) => update("executive_sponsor", event.target.value)}
