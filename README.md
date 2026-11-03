@@ -10,6 +10,7 @@ AI Task Force intake: file a request, review and edit the request list, get a su
 | Request ids | Sequence `project_intake.project_req_seq` (`REQ-####`), realigned to the highest id on every start |
 | Intake-type classification | `ai_classify` on the `sql-warehouse` app resource; falls back to keyword heuristics if the call fails |
 | Sample data | Off by default. Set `PROJECT_INTAKE_SEED_SAMPLE_DATA` to `"1"` in `app.yml` to load the sample requests into an **empty** table (demo workspaces) |
+| Delta copy (optional) | Off by default. Set `PROJECT_INTAKE_DELTA_TABLE` to `catalog.schema.table` in `app.yml` and every create/update is MERGEd into that Unity Catalog table on the `sql-warehouse`, plus a full reconcile on start. Best-effort: Lakebase stays the system of record. The app service principal needs `USE CATALOG`, `USE SCHEMA`, and `SELECT` + `MODIFY` on the table (plus `CREATE TABLE` on the schema if the table doesn't exist yet) |
 
 `app.yml` maps `LAKEBASE_ENDPOINT` and `DATABRICKS_SQL_WAREHOUSE_ID` from the app resources; `PGHOST`/`PGUSER`/`PGDATABASE` are injected by the `postgres` resource. The app refuses to start without a database.
 
