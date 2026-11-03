@@ -147,7 +147,7 @@ function PortfolioPage() {
       {list.data && list.data.items.length > 0 ? (
         <div className="overflow-x-auto rounded-xl border bg-card">
           <table className="w-full min-w-[120rem] text-left text-sm">
-            <thead className="sticky top-0 z-10 border-b bg-muted text-xs uppercase tracking-wide text-foreground">
+            <thead className="sticky top-0 z-[1] border-b bg-muted text-xs uppercase tracking-wide text-foreground">
               <tr>
                 {HEADERS.map((header) => (
                   <th

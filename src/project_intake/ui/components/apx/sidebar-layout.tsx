@@ -28,7 +28,7 @@ function SidebarLayout({ children }: SidebarLayoutProps) {
         <SidebarContent>{children}</SidebarContent>
         <SidebarRail />
       </Sidebar>
-      <SidebarInset className="flex h-screen flex-col">
+      <SidebarInset className="flex h-screen min-w-0 flex-col">
         <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur-sm">
           <SidebarTrigger className="-ml-1 cursor-pointer" />
           <div className="min-w-0">
@@ -38,8 +38,8 @@ function SidebarLayout({ children }: SidebarLayoutProps) {
           <div className="flex-1" />
           <ModeToggle />
         </header>
-        <div className="flex flex-1 justify-center overflow-auto bg-background">
-          <div className="flex w-full flex-1 flex-col gap-6 px-6 py-8 lg:px-10">
+        <div className="flex min-w-0 flex-1 justify-center overflow-auto bg-background">
+          <div className="flex w-full min-w-0 flex-1 flex-col gap-6 px-6 py-8 lg:px-10">
             <Outlet />
           </div>
         </div>
